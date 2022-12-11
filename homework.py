@@ -25,7 +25,7 @@ HOMEWORK_VERDICTS = {
 
 
 def add_logger(name):
-    """создание логов"""
+    """создание логов."""
     logger = logging.getLogger(name)
     logger.setLevel(logging.DEBUG)
     handler = StreamHandler()
@@ -42,16 +42,16 @@ logger = add_logger(__name__)
 
 
 def check_tokens():
-    """Проверка переменных окружения"""
+    """Проверка переменных окружения."""
     if (PRACTICUM_TOKEN is None
             or TELEGRAM_TOKEN is None
             or TELEGRAM_CHAT_ID is None):
-        logging.critical('Ошибка в переменных окружения')
+        logger.critical('Ошибка в переменных окружения')
         raise ValueError
 
 
 def send_message(bot, message):
-    """отправка сообщения"""
+    """отправка сообщения."""
     try:
         bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message)
         logger.debug('Сообщение отправлено')
@@ -60,7 +60,7 @@ def send_message(bot, message):
 
 
 def get_api_answer(timestamp):
-    """запрос к серверу ЯП"""
+    """запрос к серверу ЯП."""
     try:
         homework_statuses = requests.get(
             ENDPOINT,
@@ -77,7 +77,7 @@ def get_api_answer(timestamp):
 
 
 def check_response(response):
-    """получение статуса домашней работы"""
+    """получение статуса домашней работы."""
     try:
         response['homeworks']
     except KeyError:
@@ -98,7 +98,7 @@ def check_response(response):
 
 
 def parse_status(homework):
-    """получение вердикта работы"""
+    """получение вердикта работы."""
     try:
         homework_name = homework['homework_name']
     except KeyError:
@@ -113,7 +113,7 @@ def parse_status(homework):
 
 
 def main():
-    """Основная логика работы бота"""
+    """Основная логика работы бота."""
     check_tokens()
     timestamp = PAYLOAD['from_date']
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
