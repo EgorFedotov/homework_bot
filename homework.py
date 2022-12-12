@@ -16,7 +16,6 @@ TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
 RETRY_PERIOD: int = 600
 ENDPOINT = 'https://practicum.yandex.ru/api/user_api/homework_statuses/'
 HEADERS = {'Authorization': f'OAuth {PRACTICUM_TOKEN}'}
-PAYLOAD = {'from_date': int(time.time())}
 HOMEWORK_VERDICTS = {
     'approved': 'Работа проверена: ревьюеру всё понравилось. Ура!',
     'reviewing': 'Работа взята на проверку ревьюером.',
@@ -65,7 +64,7 @@ def get_api_answer(timestamp):
         homework_statuses = requests.get(
             ENDPOINT,
             headers=HEADERS,
-            params=PAYLOAD
+            params={'from_date': f'{timestamp}'}
         )
     except Exception as error:
         logger.error(f'Яндекс.Практикум вернул ошибку: {error}')
@@ -115,11 +114,12 @@ def parse_status(homework):
 def main():
     """Основная логика работы бота."""
     check_tokens()
-    timestamp = PAYLOAD['from_date']
+    timestamp = int(time.time())
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
     while True:
         try:
             homeworks = get_api_answer(timestamp)
+            timestamp = homeworks.get('current_date')
             check_response(homeworks)
             homeworks_list = homeworks.get('homeworks')
             for homework in homeworks_list:
@@ -128,7 +128,6 @@ def main():
         except Exception as error:
             send_message(bot, f'Сбой в работе программы: {error}')
             logger.error(f'Сбой в работе программы: {error}')
-            time.sleep(RETRY_PERIOD)
         finally:
             time.sleep(RETRY_PERIOD)
 
