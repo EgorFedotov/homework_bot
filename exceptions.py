@@ -7,3 +7,7 @@ class EmptyHomeworksList(Exception):
 class ResponseStatusError(Exception):
     '''Неожиданный код ответа API.'''
     pass
+
+
+class DataNotValid(Exception):
+    '''Дата проверки работы неверная.'''
