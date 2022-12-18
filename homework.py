@@ -82,15 +82,15 @@ def get_api_answer(timestamp):
 def check_response(response):
     """получение статуса домашней работы."""
     if not isinstance(response, dict):
-        raise TypeError('Получены данные не ввиде словаря')
+        raise TypeError('Получены данные не в виде словаря')
     if 'homeworks' not in response:
         raise KeyError('Нет ключа homeworks')
     if not isinstance(response['homeworks'], list):
-        raise TypeError('Получены данные homeworks не ввиде списка')
+        raise TypeError('Получены данные homeworks не в виде списка')
     if 'current_date' not in response:
-        raise exceptions.DataNotValid('Нет ключа current_date')
+        logger.error('Отсутствует ключ current_date')
     if not isinstance(response['current_date'], int):
-        raise TypeError('Получены данные current_date не ввиде числа')
+        logger.error('ключи current_date не в виде числа')
     return response['homeworks']
 
 
@@ -103,7 +103,7 @@ def parse_status(homework):
         raise KeyError('Нет ключа status')
     homework_status = homework['status']
     if homework_status not in HOMEWORK_VERDICTS:
-        raise TypeError(
+        raise ValueError(
             f'Получен неизвестный статус домашней работы - {homework_status}'
         )
     verdict = HOMEWORK_VERDICTS[homework_status]
@@ -120,21 +120,22 @@ def main():
     previous_message = None
     while True:
         try:
-            homeworks = get_api_answer(timestamp)
-            check_response(homeworks)
-            homework = homeworks.get('homeworks')[0]
-            message = parse_status(homework)
+            response = get_api_answer(timestamp)
+            homeworks = check_response(response)
+            if homeworks:
+                homework = response.get('homeworks')[0]
+                send_message(bot, parse_status(homework))
+            else:
+                send_message(bot, 'в списке нет домашки')
+                logger.info('в списке нет домашки')
             timestamp = homeworks.get('current_date')
-        except exceptions.EmptyHomeworksList:
-            logger.debug('Cтатус задания не обновлялся')
-            message = 'Cтатус задания не обновлялся'
         except Exception as error:
             message = f'Сбой в работе программы: {error}'
-            logger.error('Сбой в работе программы:')
-        finally:
+            logger.error(f'Сбой в работе программы {error}')
             if previous_message != message:
                 send_message(bot, message)
                 previous_message = message
+        finally:
             time.sleep(RETRY_PERIOD)
 
 
