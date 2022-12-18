@@ -18,7 +18,6 @@ PRACTICUM_TOKEN = os.getenv('PRACTICUM_TOKEN')
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
 RETRY_PERIOD: int = 600
-TIME_BEFORE_CHECKING: int = 1671127200
 ENDPOINT = 'https://practicum.yandex.ru/api/user_api/homework_statuses/'
 HEADERS = {'Authorization': f'OAuth {PRACTICUM_TOKEN}'}
 HOMEWORK_VERDICTS = {
@@ -88,9 +87,9 @@ def check_response(response):
     if not isinstance(response['homeworks'], list):
         raise TypeError('Получены данные homeworks не в виде списка')
     if 'current_date' not in response:
-        logger.error('Отсутствует ключ current_date')
+        raise exceptions.DateNotValid('нет  ключа current_date')
     if not isinstance(response['current_date'], int):
-        logger.error('ключи current_date не в виде числа')
+        raise exceptions.DateNotValid('Ключ current_date не в виде числа')
     return response['homeworks']
 
 
@@ -116,25 +115,24 @@ def main():
         logger.critical('Отсутствует переменная окружения!')
         sys.exit('Программа остановлена, отсутствуют переменные окружения')
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
-    timestamp = TIME_BEFORE_CHECKING
+    timestamp = int(time.time())
     previous_message = None
     while True:
         try:
             response = get_api_answer(timestamp)
             homeworks = check_response(response)
             if homeworks:
-                homework = response.get('homeworks')[0]
+                homework = response['homeworks'][0]
                 send_message(bot, parse_status(homework))
-            else:
-                send_message(bot, 'в списке нет домашки')
-                logger.info('в списке нет домашки')
-            timestamp = homeworks.get('current_date')
+            timestamp = response.get('current_date')
         except Exception as error:
             message = f'Сбой в работе программы: {error}'
             logger.error(f'Сбой в работе программы {error}')
             if previous_message != message:
                 send_message(bot, message)
                 previous_message = message
+        except exceptions.DataNotValid as error:
+            logger.error(f'Дата проверки изменений некорректна: {error}')
         finally:
             time.sleep(RETRY_PERIOD)
 

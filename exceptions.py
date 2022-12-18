@@ -11,3 +11,4 @@ class ResponseStatusError(Exception):
 
 class DataNotValid(Exception):
     '''Дата проверки работы неверная.'''
+    pass
