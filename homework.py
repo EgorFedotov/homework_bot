@@ -3,11 +3,12 @@ import os
 import sys
 import time
 from http import HTTPStatus
+from json.decoder import JSONDecodeError
 from logging import StreamHandler
 
-from dotenv import load_dotenv
-import telegram
 import requests
+import telegram
+from dotenv import load_dotenv
 
 import exceptions
 
@@ -72,7 +73,7 @@ def get_api_answer(timestamp):
                 f'API недоступен, статус код - {homework_statuses.status_code}'
             )
         return homework_statuses.json()
-    except requests.exceptions.JSONDecodeError as error:
+    except JSONDecodeError as error:
         raise exceptions.ResponseStatusError(f'Сбой JSON в ответе: {error}')
     except requests.exceptions.RequestException as error:
         raise exceptions.ResponseStatusError(f'Эндпоинт недоступен {error}')
