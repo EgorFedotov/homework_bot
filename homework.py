@@ -126,14 +126,14 @@ def main():
                 homework = response['homeworks'][0]
                 send_message(bot, parse_status(homework))
             timestamp = response.get('current_date')
+        except exceptions.DataNotValid as error:
+            logger.error(f'Дата проверки изменений некорректна: {error}')
         except Exception as error:
             message = f'Сбой в работе программы: {error}'
             logger.error(f'Сбой в работе программы {error}')
             if previous_message != message:
                 send_message(bot, message)
                 previous_message = message
-        except exceptions.DataNotValid as error:
-            logger.error(f'Дата проверки изменений некорректна: {error}')
         finally:
             time.sleep(RETRY_PERIOD)
 
